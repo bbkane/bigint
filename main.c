@@ -66,7 +66,7 @@ void printf_bigint(bigint* bi)
 {
     printf("size: %zu\n", bi->digits_len);
     printf("digits: ");
-    for(size_t i = bi->digits_len - 1; i > 0; --i)
+    for (size_t i = bi->digits_len - 1; i > 0; --i)
     {
         printf("%c", bi->digits[i] + '0');
     }
@@ -84,8 +84,43 @@ bigint* add(bigint* bi1, bigint* bi2)
     // copy b1 into ans
     memcpy(ans->digits, bi1->digits, bi1->digits_len);
 
-    // TODO: actually add
+    char carry = 0;
+    char next_carry = 0;
+    for(size_t i = 0; i < bi2->digits_len; ++i)
+    {
+        char first_digit = ans->digits[i];
+        char second_digit = bi2->digits[i];
+        char digit_sum = first_digit + second_digit + carry;
+        // it's expected to be less than 18
+        // TODO: fancy branchless bit expression
+        if (digit_sum >= 10) {
+            next_carry = 1;
+            digit_sum = digit_sum - 10;
+        }
+        else
+        {
+            next_carry = 0;
+        }
+        /* printf("%c + %c + %c = %c\n", */
+        /*     first_digit + '0', */
+        /*     second_digit + '0', */
+        /*     carry + '0', */
+        /*     digit_sum + '0'); */
+        carry = next_carry;
+        ans->digits[i] = digit_sum;
+    }
 
+    // handle the carry bit on the last digit
+    /* ans->digits[bi2->digits_len] += carry; */
+    if (carry)
+    {
+        size_t i = bi2->digits_len;
+        for(; ans->digits[i] == 9; ++i)
+        {
+            ans->digits[i] = 0;
+        }
+        ans->digits[i] += carry;
+    }
     return ans;
 }
 
@@ -100,15 +135,18 @@ void test_malloc(char* digits, size_t digits_len, size_t bigint_digits_len)
 
 void test_add(char* a, char* b)
 {
+    printf("Adding: %s + %s\n", a, b);
     bigint* bia = malloc_bigint(a, strlen(a), strlen(a));
-    bigint* bib = malloc_bigint(a, strlen(b), strlen(b));
-    printf_bigint(add(bia, bib));
+    bigint* bib = malloc_bigint(b, strlen(b), strlen(b));
+    bigint* bis = add(bia, bib);
+    printf_bigint(bis);
+    free_bigint(bis);
     free_bigint(bia);
     free_bigint(bib);
 }
 
 
-int main()
+void test()
 {
 #if 1
     test_malloc("12345", 5, 4);
@@ -117,5 +155,33 @@ int main()
 #endif
 #if 1
     test_add("9875", "234");
+    test_add("99999999999999999999999875", "234");
 #endif
+}
+
+int main(int argc, char** argv)
+{
+    (void) argc;
+    bigint* bia = malloc_bigint(argv[1], strlen(argv[1]), strlen(argv[1]));
+    bigint* bib = malloc_bigint(argv[2], strlen(argv[2]), strlen(argv[2]));
+    bigint* bis = add(bia, bib);
+
+    // get to the non-zero digits
+    size_t i = bis->digits_len -1;
+    while (bis->digits[i] == 0)
+    {
+        --i;
+    }
+
+    // now start printing
+    while (i > 0)
+    {
+        printf("%c", bis->digits[i] + '0');
+        --i;
+    }
+    printf("%c\n", bis->digits[0] + '0');
+
+    free_bigint(bis);
+    free_bigint(bia);
+    free_bigint(bib);
 }
