@@ -43,17 +43,14 @@ bigint* malloc_bigint(char* digits, size_t digits_len, size_t bigint_digits_len)
 
     if (digits)
     {
-        // copy the digits into buffer converting from chars to digits
-        // TODO: I should probably use memcopy (it's probably vectorized) and subtract '0' in a separate loop
-        char* current_digits_char = digits + digits_len - 1;
-        char* current_new_buffer_char = new_buffer + bigint_digits_len - 1;
-        while((current_digits_char - digits) && (current_new_buffer_char - new_buffer))
+        // copy the digits into buffer converting from chars to digits ones place first!
+        size_t i = 0;
+        for (size_t j = digits_len - 1; j > 0; --j)
         {
-            *(current_new_buffer_char) = *(current_digits_char) - '0';
-            current_digits_char--;
-            current_new_buffer_char--;
+            new_buffer[i] = digits[j] - '0';
+            ++i;
         }
-        *(current_new_buffer_char) = *(current_digits_char) - '0';
+        new_buffer[i] = digits[0] - '0';
     }
     new_bigint->digits = new_buffer;
     return new_bigint;
@@ -69,10 +66,11 @@ void printf_bigint(bigint* bi)
 {
     printf("size: %zu\n", bi->digits_len);
     printf("digits: ");
-    for(size_t i = 0; i < bi->digits_len; ++i)
+    for(size_t i = bi->digits_len - 1; i > 0; --i)
     {
         printf("%c", bi->digits[i] + '0');
     }
+    printf("%c", bi->digits[0] + '0');
     printf("\n");
 }
 
@@ -83,13 +81,10 @@ bigint* add(bigint* bi1, bigint* bi2)
     // TODO: better allocation strategy?
     size_t new_len = MAX(bi1->digits_len, bi2->digits_len) + 1;
     bigint* ans = malloc_bigint(NULL, 0, new_len);
-    // TODO: better stopping strategy...I can stop when both are 0
     // copy b1 into ans
-    memcpy(ans->digits + ans->digits_len - bi1->digits_len,
-        bi1->digits, bi1->digits_len);
-    // add b2 to ans
-    char* current_ans_digit = ans->digits + ans->digits_len - 1;
-    char* current bi2_digit = bi2->digits + bi2->digits_len - 1;
+    memcpy(ans->digits, bi1->digits, bi1->digits_len);
+
+    // TODO: actually add
 
     return ans;
 }
@@ -115,12 +110,12 @@ void test_add(char* a, char* b)
 
 int main()
 {
-#if 0
+#if 1
     test_malloc("12345", 5, 4);
     test_malloc("12345", 5, 6);
     test_malloc(NULL, 2, 3);
 #endif
 #if 1
-    test_add("12221", "234");
+    test_add("9875", "234");
 #endif
 }
