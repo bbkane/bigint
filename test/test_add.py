@@ -5,7 +5,7 @@ def main():
     a = 1
     b = 2
     ans = sp.run(['./bigint', str(a), str(b)],
-                 shell=True, stderr=sp.PIPE, stdout=sp.PIPE)
+                 shell=False, stderr=sp.PIPE, stdout=sp.PIPE)
     print(ans)
 
 
